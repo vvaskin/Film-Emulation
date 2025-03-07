@@ -1,3 +1,6 @@
+from flask import request, jsonify, send_file
+from config import app
+
 import numpy as np
 from PIL import Image, ImageFilter
 from tqdm import tqdm
@@ -5,6 +8,8 @@ import math
 import os
 import random
 import blend_modes
+
+import io
 
 def get_random_file(path):
     """
@@ -143,17 +148,13 @@ def set_opacity(image, value):
             image[i, j] = (image[i, j][0], image[i, j][1], image[i, j][2], int(value * 255))
     return image
 
-def main():
+@app.route("/process-image", methods=["POST"])
+def process_image():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'})
+    
     landscape = Image.open("test-image.jpg")
-    '''
     
-    # Picking a random film stock out of the presets
-    brand = get_random_file("HaldCLUT/Color")
-    film_stock = get_random_file(f"HaldCLUT/Color/{brand}")
-    hald_clut = Image.open(f"HaldClut/Color/{brand}/{film_stock}")
-    print('The chosen LUT is : ', film_stock)
-    
-    '''
 
     hald_clut = Image.open(f'Film HaldCLUTs/{get_random_file('Film HaldCLUTs')}')
     applied_clut = apply_hald_clut(hald_clut, landscape)
@@ -181,8 +182,6 @@ def main():
     print('Applied light-leak')
     applied_overlay.show()
 
-    
-
     # Converting Image to NumPy arrays
     applied_overlay = set_opacity(np.array(applied_overlay).astype(float), 1)
     grain = set_opacity(np.array(grain).astype(float), 1)
@@ -192,7 +191,16 @@ def main():
 
     final_image = Image.fromarray(applied_grain.astype('uint8'), 'RGBA')
 
-    final_image.show()
-    
+    # Convert PIL Image to bytes for sending
+    img_buffer = io.BytesIO() # Create temporary memory buffer
+    final_image.save(img_buffer, 'PNG') # Save the image to the buffer
 
-main()
+    return send_file(img_buffer, mimetype='image/png')
+    
+@app.route('/')
+def homepage():
+    return 'Home'
+
+
+if __name__ == "__main__": # Run if you run the file, ignore if imported
+    app.run(debug=True)
