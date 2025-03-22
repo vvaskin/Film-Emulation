@@ -199,7 +199,7 @@ def process_image():
     
 @app.route('/')
 def homepage():
-    return 'Home'
+    return {"Data": ["data1", "data2"]}
 
 
 if __name__ == "__main__": # Run if you run the file, ignore if imported
