@@ -15,9 +15,13 @@ def get_random_file(path):
     """
     Returns a random filename, chosen among the files of the given path.
     """
-    files = os.listdir(path)
-    index = random.randrange(0, len(files))
-    return files[index]
+    filename = '.'
+    while filename[0] == '.':
+        files = os.listdir(path)
+        index = random.randrange(0, len(files))
+        filename = files[index]
+        print(filename)
+    return filename
 
 def apply_3d_clut(clut, img, clut_size):
     """
@@ -153,11 +157,11 @@ def process_image():
     # Checks if the file exists
     if 'image' not in request.files:
         return jsonify({'error': 'No image provided'})
-    
-    landscape = Image.open("test-image.jpg")
+
+    landscape = Image.open(request.files['image'])
     
 
-    hald_clut = Image.open(f'Film HaldCLUTs/{get_random_file('Film HaldCLUTs')}')
+    hald_clut = Image.open(f"Film HaldCLUTs/{get_random_file('Film HaldCLUTs')}")
     applied_clut = apply_hald_clut(hald_clut, landscape)
     print('Applied Hald CLUT to the image')
 
@@ -181,7 +185,9 @@ def process_image():
     # blend_modes.overlay() expects a np.ndarray as input (same with its output), so we convert back to an Image.Image
     applied_overlay = Image.fromarray(blend_modes.overlay(applied_halation, overlay, 0.5).astype('uint8'), mode="RGBA")
     print('Applied light-leak')
-    applied_overlay.show()
+
+    grain = Image.open(f"Grains Overlays/{get_random_file('Grains Overlays')}")
+    grain = resize_overlay(applied_overlay, grain)
 
     # Converting Image to NumPy arrays
     applied_overlay = set_opacity(np.array(applied_overlay).astype(float), 1)
@@ -195,8 +201,9 @@ def process_image():
     # Convert PIL Image to bytes for sending
     img_buffer = io.BytesIO() # Create temporary memory buffer
     final_image.save(img_buffer, 'PNG') # Save the image to the buffer
+    img_buffer.seek(0)
 
-    return send_file(img_buffer, mimetype='image/png') # Sends file using flask's send_file function
+    return send_file(img_buffer, mimetype='image/png'), 200 # Sends file using flask's send_file function
     
 @app.route("/", methods=["GET"])
 def index():
