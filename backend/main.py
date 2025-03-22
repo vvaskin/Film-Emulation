@@ -150,6 +150,7 @@ def set_opacity(image, value):
 
 @app.route("/process-image", methods=["POST"])
 def process_image():
+    # Checks if the file exists
     if 'image' not in request.files:
         return jsonify({'error': 'No image provided'})
     
@@ -195,12 +196,11 @@ def process_image():
     img_buffer = io.BytesIO() # Create temporary memory buffer
     final_image.save(img_buffer, 'PNG') # Save the image to the buffer
 
-    return send_file(img_buffer, mimetype='image/png')
+    return send_file(img_buffer, mimetype='image/png') # Sends file using flask's send_file function
     
-@app.route('/')
-def homepage():
-    return {"Data": ["data1", "data2"]}
-
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({"message":"API is up and running"}), 200
 
 if __name__ == "__main__": # Run if you run the file, ignore if imported
     app.run(debug=True)
