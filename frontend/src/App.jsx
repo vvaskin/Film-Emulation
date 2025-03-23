@@ -4,7 +4,6 @@ function App() {
 
   return (
     <>
-    <h1>Upload a photo</h1>
       <ImageUploader />
     </>
   )
