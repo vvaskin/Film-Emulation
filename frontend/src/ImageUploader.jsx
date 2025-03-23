@@ -65,7 +65,7 @@ function ImageUploader() {
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">Upload an Image</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 mb-8">
         <div className="flex items-center justify-center w-full">
           <label className="w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg shadow-lg tracking-wide uppercase border border-blue-500 cursor-pointer hover:bg-blue-500 hover:text-white transition-colors duration-300">
             <svg className="w-8 h-8" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -84,26 +84,35 @@ function ImageUploader() {
         </button>
       </form>
 
-      {previewUrl && (
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">Selected Image Preview:</h3>
-          <div className="rounded-lg overflow-hidden shadow-lg">
-            <img src={previewUrl} alt="Preview" className="w-full object-cover" />
-          </div>
+      <div className="flex gap-8">
+        {/* Left side - Preview Image */}
+        <div className="flex-1">
+          {previewUrl && (
+            <div>
+              <h3 className="text-xl font-semibold mb-4 text-gray-700">Original Image:</h3>
+              <div className="rounded-lg overflow-hidden shadow-lg">
+                <img src={previewUrl} alt="Preview" className="w-full object-cover" />
+              </div>
+            </div>
+          )}
         </div>
-      )}
 
-      {processedImageUrl && (
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">Processed Image:</h3>
-          <div className="rounded-lg overflow-hidden shadow-lg">
-            <img src={processedImageUrl} alt="Processed" className="w-full object-cover" />
-          </div>
+        {/* Right side - Processed Image */}
+        <div className="flex-1">
+          {processedImageUrl && (
+            <div>
+              <h3 className ="text-xl font-semibold mb-4 text-gray-700">Processed Image:</h3>
+              <div className="rounded-lg overflow-hidden shadow-lg">
+                <img src={processedImageUrl} alt="Processed" className="w-full object-cover" />
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
+      {/* Error message at the bottom */}
       {error && (
-        <div className="mt-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
+        <div className="mt-8 p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
           <p>{error}</p>
         </div>
       )}
