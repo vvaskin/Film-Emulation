@@ -61,11 +61,13 @@ def apply_hald_clut(hald_img, img):
     clut_r = np.rint(img[:, :, 0] * scale).astype(int)
     clut_g = np.rint(img[:, :, 1] * scale).astype(int)
     clut_b = np.rint(img[:, :, 2] * scale).astype(int)
-    filtered_image = np.zeros((img.shape))
+    indices = clut_r + clut_size ** 2 * clut_g + clut_size ** 4 * clut_b
     # Convert the 3D CLUT indexes into indexes for our HaldCLUT numpy array and copy over the colors to the new image
-    filtered_image[:, :] = hald_img[clut_r + clut_size ** 2 * clut_g + clut_size ** 4 * clut_b]
-    filtered_image = Image.fromarray(filtered_image.astype('uint8'), 'RGB')
-    return filtered_image
+    height, width = img.shape[:2]
+    result = hald_img[indices.reshape(-1)].reshape(height, width, 3) # Crazy sophisticated line of code, got it from ChatGPT
+
+    return result
+
 
 def create_halation_mask(img, threshold=200):
     """
@@ -113,10 +115,9 @@ def resize_overlay(image: Image.Image, overlay: Image.Image):
     image_size = image.size # (w, h)
 
     # Checks if our image is in portrait orientation and rotates the overlay
-    '''
     if image_size[0] < image_size[1]:
         overlay = overlay.rotate(90)
-    '''
+
     overlay = overlay.resize(image_size)
 
     return overlay
@@ -137,20 +138,17 @@ def crop_overlay(image: Image.Image, overlay: Image.Image):
     
     return overlay.crop((left, top, right, bottom))
 
-def set_opacity(image, value):
+def set_full_opacity(image):
     '''
     Converts an RGB image (3 channels) into an RGBA image (4 channels) by adding an alpha channel for opacity.
     '''
-    size = image.shape
 
+    # Creating an alpha channel
     if image.shape[2] == 3:
-        image = np.dstack((image, np.ones((image.shape[0], image.shape[1])) * 255))  # Add an alpha channel
-
-    size = image.shape
-    for i in range(size[0]):
-        for j in range(size[1]):
-            image[i, j] = (image[i, j][0], image[i, j][1], image[i, j][2], int(value * 255))
-    return image
+        alpha_channel = np.ones((image.shape[0], image.shape[1])) * 255
+        return np.dstack([image, alpha_channel])
+    else:
+        return image
 
 @app.route("/process-image", methods=["POST"])
 def process_image():
@@ -179,8 +177,8 @@ def process_image():
     applied_halation = np.array(applied_halation).astype(float)
     overlay = np.array(overlay).astype(float)
 
-    applied_halation = set_opacity(applied_halation, 1)
-    overlay = set_opacity(overlay, 1)
+    applied_halation = set_full_opacity(applied_halation)
+    overlay = set_full_opacity(overlay)
 
     # blend_modes.overlay() expects a np.ndarray as input (same with its output), so we convert back to an Image.Image
     applied_overlay = Image.fromarray(blend_modes.overlay(applied_halation, overlay, 0.5).astype('uint8'), mode="RGBA")
@@ -190,8 +188,8 @@ def process_image():
     grain = resize_overlay(applied_overlay, grain)
 
     # Converting Image to NumPy arrays
-    applied_overlay = set_opacity(np.array(applied_overlay).astype(float), 1)
-    grain = set_opacity(np.array(grain).astype(float), 1)
+    applied_overlay = set_full_opacity(np.array(applied_overlay).astype(float))
+    grain = set_full_opacity(np.array(grain).astype(float))
 
     applied_grain = blend_modes.overlay(applied_overlay, grain, 0.5)
     print('Grain applied')
