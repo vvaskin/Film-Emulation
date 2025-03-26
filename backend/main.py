@@ -113,9 +113,14 @@ def apply_halation(img, intensity=0.5, threshold=200, blur_radius=15):
 
 def resize_overlay(image: Image.Image, overlay: Image.Image):
     image_size = image.size # (w, h)
+    overlay_size = overlay.size
+    
+    overlay_is_portrait = overlay_size[0]/overlay_size[1] < 1
+    image_is_portrait = image_size[0]/image_size[1] < 1
+
 
     # Checks if our image is in portrait orientation and rotates the overlay
-    if image_size[0] < image_size[1]:
+    if image_is_portrait != overlay_is_portrait:
         overlay = overlay.rotate(90)
 
     overlay = overlay.resize(image_size)
@@ -156,19 +161,23 @@ def process_image():
     if 'image' not in request.files:
         return jsonify({'error': 'No image provided'})
 
-    landscape = Image.open(request.files['image'])
+    image = Image.open(request.files['image'])
     
 
     hald_clut = Image.open(f"Film HaldCLUTs/{get_random_file('Film HaldCLUTs')}")
-    applied_clut = apply_hald_clut(hald_clut, landscape)
-    print('Applied Hald CLUT to the image')
+    applied_clut = apply_hald_clut(hald_clut, image)
+    print(f'Applied {hald_clut.filename} to the image')
+    #Image.fromarray(applied_clut).show() # REMOVE
 
     # Picking a random light leak overlay
-    random_light_leak_file = get_random_file('Light Leaks Overlays/Multi')
-    light_leak = Image.open(f"Light Leaks Overlays/Multi/{random_light_leak_file}")
+    random_light_leak_folder = get_random_file('Light Leaks Overlays')
+    print(random_light_leak_folder)
+    random_light_leak_file = get_random_file(f'Light Leaks Overlays/{random_light_leak_folder}')
+    light_leak = Image.open(f'Light Leaks Overlays/{random_light_leak_folder}/{random_light_leak_file}')
+    # light_leak.show() # REMOVE
     print('The chosen light leak is: ', random_light_leak_file)
     
-
+    
     applied_halation = apply_halation(applied_clut, intensity=0.3, threshold=100, blur_radius=100)
     print('Applied halation')
     overlay = resize_overlay(applied_halation, light_leak)
@@ -185,7 +194,9 @@ def process_image():
     print('Applied light-leak')
 
     grain = Image.open(f"Grains Overlays/{get_random_file('Grains Overlays')}")
+    grain = crop_overlay(applied_overlay, grain)
     grain = resize_overlay(applied_overlay, grain)
+    # grain.show() #REMOVE
 
     # Converting Image to NumPy arrays
     applied_overlay = set_full_opacity(np.array(applied_overlay).astype(float))

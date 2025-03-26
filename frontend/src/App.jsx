@@ -14,7 +14,7 @@ function App() {
       <main className="container mx-auto px-4 py-8 flex-grow">
         <section id="about" className="mb-8">
           <p className="text-lg text-center">
-            Hey! I am a student at The University of Hong Kong, and this website is a side project of mine where I combined by love for photography with programming. Filmify, as is obvious from its name, turns your digital photos into film-like scans. Try it out below:
+            Hey! I am a student at The University of Hong Kong, and this website is a side project of mine where I combined my love for photography with programming. Filmify, as is obvious from its name, turns your digital photos into film-like scans. Try it out below:
           </p>
         </section>
 
