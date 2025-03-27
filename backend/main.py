@@ -194,7 +194,7 @@ def process_image():
     print('Applied light-leak')
 
     grain = Image.open(f"Grains Overlays/{get_random_file('Grains Overlays')}")
-    grain = crop_overlay(applied_overlay, grain)
+    #grain = crop_overlay(applied_overlay, grain)
     grain = resize_overlay(applied_overlay, grain)
     # grain.show() #REMOVE
 
