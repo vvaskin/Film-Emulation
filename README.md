@@ -1,22 +1,81 @@
 # Filmify - Analog Film Emulator
 
-#### Video Demo: 
+#### Video Demo: https://youtu.be/YRexE5m2JZw
 
 #### Description:
 Filmify is a web-based application that transforms digital images into film-like photographs using authentic analog effects. Built with Python/Flask for image processing and React.js for the frontend. This project serves as my final project for CS50's Introduction to Computer Science
 
-## Implementation Details
+# Implementation Details
 
-### Backend Architecture (Python/Flask)
+## Backend Architecture (Python/Flask)
 The core image processing pipeline consists of four main stages:
 
-1. **Hald CLUT** - the algorithm randomly chooses a Hald CLUT (A 2D representation of a traditional Colour Look Up Table) and applies it to the image
-2. **Halation** - blurs the brightest areas by first creating a boolean mask of bright areas (similar to Photoshop), blurring this mask, and blending this overlay with the image
-3. **Light Leaks** - randomly chooses a random light leak overlay from the ones given and applies it using the `blend_modes` library by cropping, scaling and rotating to fill the original image.
-4. **Grain** - similar to the previous step, but this time cycles through a set of grain overlays
+### 1. Color Grading with Hald CLUT  
+The process begins by applying color grading using a Hald CLUT (Color Look-Up Table). A Hald CLUT is an image that translates every existing colour in the original image to a new one, for a specific "look". These CLUTs were taken from RawTherapee (see credits below).
 
-### Frontend Architecture (React.js)
+The algorithm:
+
+- Randomly selects a Hald CLUT from a collection of film-inspired color grades
+- Maps each pixel's RGB values from the input image to corresponding values in the Hald CLUT
+- Creates a new image with the transformed colors
+
+### 2. Halation Effect
+Halation simulates the light bleeding effect common in film photography, particularly around bright areas. 
+
+The process:
+
+- Creates a mask by identifying bright pixels (A black and white mask, similar to what one would do in Photoshop)
+- Applies Gaussian blur to this mask to create a soft glow effect
+- Blends this glowing effect back into the image
+- Red channel receives the strongest effect, simulating the characteristic red glow of film halation (although I do have to admit the effect is not that apparent)
+
+### 3. Light Leak Simulation
+Light leaks simulate the effect of light accidentally entering the camera and creating unique color patterns. In film chameras this is due to analogue imperfections, which add character and interest to a photograph. 
+
+The implementation:
+
+- Randomly selects a light leak overlay from different presets stored in the "Light Leaks Overlays" folder
+- Resizes the overlay while maintaining aspect ratio so it covers the image
+- Crops and positions to avoid overlays ending before the image does
+- Blends the light leak with the image using overlay the blend mode python library
+
+
+### 4. Film Grain
+
+Film grain adds the characteristic texture of analog film. 
+
+The process (similar to the light leak process):
+
+- Selects a random grain pattern from a collection
+- Resizes the grain overlay to match the image dimensions
+- Applies the grain using overlay blend mode with controlled opacity (otherwise the image becomes too dark)
+
+## Frontend Architecture (React.js)
 The front end is built with React.js using VITE. Tailwind CSS is used for styling.
+
+# File Structure
+
+## Backend
+- `Film HaldCLUTs/` - folder with different Hald CLUTS from RawTherapee
+- `Grains Overlays/` - folder with grain overlays
+- `Light Leaks Overlays/` - folder with light leak overlays
+- `requirements.txt` - list of dependencies
+- `main.py` - main python file with routing and the image processing pipeline
+- `config.py` - Flask app configurations
+
+## Frontend
+- `src/` - source code directory
+  - `App.css` - styling for the App component
+  - `App.jsx` - main React component containing the page layout
+  - `ImageUploader.jsx` - component handling image upload and display
+  - `main.jsx` - entry point for the React application
+- `eslint.config.js` - ESLint configuration for code linting
+- `index.html` - root HTML file
+- `package-lock.json` - exact dependency tree for npm packages
+- `package.json` - project metadata and dependencies
+- `README.md` - VITE README file
+- `vite.config.js` - configuration for Vite build tool
+
 ## Usage Details
 1. Clone repository
 
@@ -45,25 +104,9 @@ npm run dev
 ```
 
 
-## Credits
+## Educational Disclaimer
+This project was created exclusively for educational purposes as part of Harvard University's CS50 course requirements. It is not intended for commercial use.
 
-RawTherapee Film Simulation Collection version 2015-09-20
-CC BY-SA 4.0
-
-This archive contains a collection of film simulation profiles in the Hald Color Look-Up Table pattern (Hald CLUT). Unless otherwise noted in the filename, they are all in the sRGB color space, 8-bit per channel, in the PNG image format. Most of them are designed to mimic the results of various film stocks, pushed and pulled in various ways or faded over time.
-
-Use the level 12 pattern Hald_CLUT_Identity_12.tif to create your own profiles, see the RawPedia article to find out how.
-
-Learn more about Hald CLUTs here:
-http://rawpedia.rawtherapee.com/Film_Simulation
-http://www.quelsolaar.com/technology/clut.html
-http://blog.patdavid.net/2013/08/film-emulation-presets-in-gmic-gimp.html
-http://blog.patdavid.net/2013/09/film-emulation-presets-in-gmic-gimp.html
-
-Credits:
-Pat David - http://rawtherapee.com/forum/memberlist.php?mode=viewprofile&u=5101
-Pavlov Dmitry - http://rawtherapee.com/forum/memberlist.php?mode=viewprofile&u=5592
-Michael Ezra - http://rawtherapee.com/forum/memberlist.php?mode=viewprofile&u=1442
-
-Disclaimer:
-The trademarked names which may appear in the filenames of the Hald CLUT images are there for informational purposes only. They serve only to inform the user which film stock the given Hald CLUT image is designed to approximate. As there is no way to convey this information other than by using the trademarked name, we believe this constitutes fair use. Neither the publisher nor the authors are affiliated with or endorsed by the companies that own the trademarks.
+## Third-Party Assets Attribution
+- **Hald CLUTs**: From RawTherapee's Film Simulation Collection ([CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/))
+- **Film Grain Textures**: Adapted from Behance pack by RvDxH (Free for personal/educational use)
