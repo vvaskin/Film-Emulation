@@ -78,7 +78,7 @@ def create_halation_mask(img, threshold=200):
     img_array = np.array(img)
     
     # Create mask of bright areas (focusing on red channel which creates nice halation)
-    mask = img_array[:,:,0] > threshold
+    mask = img_array[:,:,0] > threshold # "Boolean mask" like used in Photoshop
     
     # Convert back to PIL image
     mask = Image.fromarray((mask * 255).astype(np.uint8))
@@ -104,6 +104,7 @@ def apply_halation(img, intensity=0.5, threshold=200, blur_radius=15):
     # Add the glow to all channels
     result = original.copy()
     for i in range(3):  # Apply to each RGB channel
+        intensity = 1 if i == 3 else intensity
         result[:,:,i] += glow * intensity
     
     # Clip values to valid range and convert back to uint8
@@ -121,27 +122,41 @@ def resize_overlay(image: Image.Image, overlay: Image.Image):
 
     # Checks if our image is in portrait orientation and rotates the overlay
     if image_is_portrait != overlay_is_portrait:
-        overlay = overlay.rotate(90)
+        overlay = overlay.rotate(90,expand=True)
 
-    overlay = overlay.resize(image_size)
+    if image_is_portrait:
+        scale_factor = image_size[0] / overlay_size[0]
+        new_overlay_size = (int(overlay_size[0] * scale_factor), image.size[1])
+    else:
+        scale_factor = image_size[1] / overlay_size[1]
+        new_overlay_size = (image.size[0], int(overlay_size[1] * scale_factor))
+
+    print(new_overlay_size)
+    overlay = overlay.resize(new_overlay_size, Image.LANCZOS)
 
     return overlay
 
 def crop_overlay(image: Image.Image, overlay: Image.Image):
     image_size = image.size # (w, h)
-    
-    # Checks if our image is in portrait orientation and rotates the overlay
-    if image_size[0] < image_size[1]:
-        overlay = overlay.rotate(90)
-    
     overlay_size = overlay.size
 
-    right = overlay_size[0] - random.randint(0, overlay_size[0] - image_size[0])
-    left = right - image_size[0]
-    bottom = overlay_size[1] - random.randint(0, overlay_size[1] - image_size[1])
-    top = bottom - image_size[1]
-    
-    return overlay.crop((left, top, right, bottom))
+    x_offset = max((image_size[0] - overlay_size[0]) // 2, 0)
+    y_offset = max((image_size[1] - overlay_size[1]) // 2, 0)
+
+
+
+
+    left = max(0, x_offset)
+    top = max(0, y_offset)
+    right = left + min(overlay_size[0], image_size[0])
+    bottom = top + min(overlay_size[1], image_size[1])
+
+    cropped_overlay = overlay.crop((left, top, right, bottom))
+    new_overlay = Image.new("RGBA", image_size)
+    new_overlay.paste(cropped_overlay, (x_offset, y_offset))
+
+
+    return new_overlay
 
 def set_full_opacity(image):
     '''
@@ -167,7 +182,6 @@ def process_image():
     hald_clut = Image.open(f"Film HaldCLUTs/{get_random_file('Film HaldCLUTs')}")
     applied_clut = apply_hald_clut(hald_clut, image)
     print(f'Applied {hald_clut.filename} to the image')
-    #Image.fromarray(applied_clut).show() # REMOVE
 
     # Picking a random light leak overlay
     random_light_leak_folder = get_random_file('Light Leaks Overlays')
@@ -181,6 +195,7 @@ def process_image():
     applied_halation = apply_halation(applied_clut, intensity=0.3, threshold=100, blur_radius=100)
     print('Applied halation')
     overlay = resize_overlay(applied_halation, light_leak)
+    overlay = crop_overlay(applied_halation, light_leak)
 
     # Converting Image to NumPy arrays
     applied_halation = np.array(applied_halation).astype(float)
@@ -194,9 +209,7 @@ def process_image():
     print('Applied light-leak')
 
     grain = Image.open(f"Grains Overlays/{get_random_file('Grains Overlays')}")
-    #grain = crop_overlay(applied_overlay, grain)
     grain = resize_overlay(applied_overlay, grain)
-    # grain.show() #REMOVE
 
     # Converting Image to NumPy arrays
     applied_overlay = set_full_opacity(np.array(applied_overlay).astype(float))
