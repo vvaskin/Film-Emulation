@@ -1,7 +1,51 @@
-# Welcome to Filmify!
+# Filmify - Analog Film Emulator
+
+#### Video Demo: 
+
+#### Description:
+Filmify is a web-based application that transforms digital images into film-like photographs using authentic analog effects. Built with Python/Flask for image processing and React.js for the frontend. This project serves as my final project for CS50's Introduction to Computer Science
+
+## Implementation Details
+
+### Backend Architecture (Python/Flask)
+The core image processing pipeline consists of four main stages:
+
+1. **Hald CLUT** - the algorithm randomly chooses a Hald CLUT (A 2D representation of a traditional Colour Look Up Table) and applies it to the image
+2. **Halation** - blurs the brightest areas by first creating a boolean mask of bright areas (similar to Photoshop), blurring this mask, and blending this overlay with the image
+3. **Light Leaks** - randomly chooses a random light leak overlay from the ones given and applies it using the `blend_modes` library by cropping, scaling and rotating to fill the original image.
+4. **Grain** - similar to the previous step, but this time cycles through a set of grain overlays
+
+### Frontend Architecture (React.js)
+The front end is built with React.js using VITE. Tailwind CSS is used for styling.
+## Usage Details
+1. Clone repository
+
+2. Install backend requirements:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Start Flask server:
+
+```bash
+flask run --port=5000
+```
+
+4. Install frontend dependencies:
+
+```bash
+cd frontend && npm install
+```
+
+5. Start development server:
+
+```bash
+npm run dev
+```
 
 
-# Credits
+## Credits
 
 RawTherapee Film Simulation Collection version 2015-09-20
 CC BY-SA 4.0
